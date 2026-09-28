@@ -47,11 +47,16 @@ jobs:
         run: |
           chmod +x autogen.sh
           ./autogen.sh
-          ./configure --enable-debug
+          build_dir=$(mktemp -d "$RUNNER_TEMP/m4rie-build.XXXXXXXX")
+          echo "BUILD_DIR=$build_dir" >> "$GITHUB_ENV"
+          cd "$build_dir"
+          "$GITHUB_WORKSPACE/configure" --enable-debug
       - name: Check
-        run: make -j $JOBS check
+        run: make -C "$BUILD_DIR" -j "$JOBS" check
       - name: Distcheck
-        run: make -j $JOBS distcheck
+        run: |
+          trap 'chmod -R u+w "$BUILD_DIR" 2>/dev/null || true' EXIT
+          make -C "$BUILD_DIR" -j "$JOBS" distcheck
 
   windows:
     runs-on: windows-latest
